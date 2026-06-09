@@ -4,7 +4,7 @@
 
 ## 使用
 
-直接双击 `index.html`，或在当前目录运行：
+网站：https://lijiamay9442-create.github.io/timeline-app/
 
 ```bash
 python3 -m http.server 8000
