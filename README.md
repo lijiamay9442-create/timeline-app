@@ -1,25 +1,34 @@
-# 时间轴 App
+# Timeline App
 
-一个以日期时间轴为核心、可离线安装到手机主屏幕的轻量日程应用。
+A lightweight schedule app built around a date-based timeline. It can be installed on a phone's home screen and used offline.
 
-## 使用
+## Run Locally
 
-网站：https://lijiamay9442-create.github.io/timeline-app/
+Open `index.html` directly, or run the following command in this directory:
 
-## 安装到手机
+```bash
+python3 -m http.server 8000
+```
 
-1. 将整个目录部署到任意 HTTPS 静态网站。
-2. 用手机浏览器打开页面。
-3. iPhone 在分享菜单选择“添加到主屏幕”；Android 在浏览器菜单选择“安装应用”。
-4. 从主屏幕打开后，应用会以横屏独立窗口运行；首次缓存完成后无需联网。
+Then visit `http://localhost:8000`.
 
-事件同时保存在本地存储和 IndexedDB 中，并申请持久化存储。卸载应用、清除浏览器网站数据或恢复手机仍会删除本机数据。
+## Install on a Phone
 
-## 功能
+1. Deploy the entire directory to any HTTPS-enabled static hosting service.
+2. Open the page in a mobile browser.
+3. On iPhone, select **Add to Home Screen** from the Share menu. On Android, select **Install App** from the browser menu.
+4. Launch the app from the home screen. It opens in a standalone landscape window and works without an internet connection after the initial cache is created.
 
-- 输入年月日并自动定位到时间轴
-- 为任意日期添加多条事项
-- 当天事项按具体时间从早到晚排列
-- 编辑、删除、完成/恢复事项
-- 数据自动保存在浏览器本地
-- 支持桌面端和手机端
+Events are stored in both local storage and IndexedDB, and the app requests persistent browser storage. Uninstalling the app, clearing its website data, or resetting the phone will still remove locally stored events.
+
+## Features
+
+- Add multiple events to any date
+- Automatically sort same-day events by their start time
+- Display single-day events as timeline points
+- Display multi-day plans as highlighted ranges
+- Separate past events from current and future events
+- Search, locate, edit, and delete events
+- Automatically scale the timeline while supporting manual zoom
+- Store data locally for offline use
+- Support desktop and mobile layouts

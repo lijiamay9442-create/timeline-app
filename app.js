@@ -2,6 +2,7 @@ const STORAGE_KEY = "simple-timeline-events-v2";
 const DATABASE_NAME = "simple-timeline-database";
 const DATABASE_STORE = "timeline-data";
 const DATABASE_RECORD_KEY = "events";
+const POINT_LANE_STEP = 44;
 const COLORS = ["#1478ff", "#00a6a6", "#2dbd7f", "#5965e8", "#7658d8"];
 const LEGACY_COLOR_MAP = {
   "#ff4f55": "#00a6a6",
@@ -215,6 +216,20 @@ function splitLegacyDetail(detail) {
 
 function renderTimeline() {
   const sortedEvents = assignEventLanes(events);
+  const laneMetrics = {
+    pointLaneCount: sortedEvents.some((event) => !isRangeEvent(event))
+      ? Math.max(
+          ...sortedEvents
+            .filter((event) => !isRangeEvent(event))
+            .map((event) => event.pointLane),
+        ) + 1
+      : 0,
+    rangeLaneCount: sortedEvents.some(isRangeEvent)
+      ? Math.max(
+          ...sortedEvents.filter(isRangeEvent).map((event) => event.rangeLane),
+        ) + 1
+      : 0,
+  };
   const currentEvents = [];
   const historyEvents = [];
 
@@ -251,6 +266,7 @@ function renderTimeline() {
     keyword: "",
     emptyTitle: "添加你的第一件事",
     emptyText: "它会出现在这条时间轴上",
+    laneMetrics,
   });
   renderEventCollection({
     timeline: elements.historyTimeline,
@@ -260,6 +276,7 @@ function renderTimeline() {
     emptyTitle: "过去",
     emptyText: "时间过去后，事件会自动来到这里",
     isHistory: true,
+    laneMetrics,
   });
 
   scheduleTimelineFit();
@@ -267,14 +284,24 @@ function renderTimeline() {
 }
 
 function assignEventLanes(sourceEvents) {
-  const laneEndDates = [];
+  const pointLaneDates = [];
+  const rangeLaneEndDates = [];
   return [...sourceEvents]
     .sort((a, b) => eventTimestamp(a).localeCompare(eventTimestamp(b)))
     .map((event) => {
-      let displayLane = laneEndDates.findIndex((endDate) => endDate < event.startDate);
-      if (displayLane === -1) displayLane = laneEndDates.length;
-      laneEndDates[displayLane] = event.endDate;
-      return { ...event, displayLane };
+      if (!isRangeEvent(event)) {
+        let pointLane = pointLaneDates.findIndex((date) => date !== event.startDate);
+        if (pointLane === -1) pointLane = pointLaneDates.length;
+        pointLaneDates[pointLane] = event.startDate;
+        return { ...event, pointLane };
+      }
+
+      let rangeLane = rangeLaneEndDates.findIndex(
+        (endDate) => endDate < event.startDate,
+      );
+      if (rangeLane === -1) rangeLane = rangeLaneEndDates.length;
+      rangeLaneEndDates[rangeLane] = event.endDate;
+      return { ...event, rangeLane };
     });
 }
 
@@ -391,6 +418,7 @@ function renderEventCollection({
   emptyTitle,
   emptyText,
   isHistory = false,
+  laneMetrics,
 }) {
   timeline.innerHTML = "";
   emptyState.classList.toggle("visible", displayedEvents.length === 0);
@@ -444,8 +472,12 @@ function renderEventCollection({
     dayEvents.forEach((event) => {
       const card = elements.eventTemplate.content.firstElementChild.cloneNode(true);
       card.dataset.id = event.id;
-      card.dataset.lane = String(event.displayLane);
-      card.style.setProperty("--event-lane", event.displayLane);
+      card.dataset.lane = String(event.pointLane);
+      card.style.setProperty("--event-lane", event.pointLane);
+      card.querySelector(".event-time").textContent =
+        event.startTime === event.endTime
+          ? event.startTime
+          : `${event.startTime}–${event.endTime}`;
       card.querySelector("h2").textContent = event.title;
       card.addEventListener("click", () => openEditor(event.id));
       card.addEventListener("keydown", (keyboardEvent) => {
@@ -472,7 +504,7 @@ function renderEventCollection({
     range.dataset.id = event.id;
     range.dataset.startDate = event.displayStartDate || event.startDate;
     range.dataset.endDate = event.displayEndDate || event.endDate;
-    range.dataset.lane = String(event.displayLane);
+    range.dataset.lane = String(event.rangeLane);
     range.tabIndex = 0;
     range.style.setProperty("--range-color", isHistory ? "#959ba8" : event.color);
     range.innerHTML = `
@@ -492,11 +524,36 @@ function renderEventCollection({
       deleteEvent(event.id);
     });
     timeline.appendChild(range);
+
+    if (event.segment !== "remaining") {
+      timeline.appendChild(createRangeBoundary(event, "start", isHistory));
+    }
+    if (event.segment !== "elapsed") {
+      timeline.appendChild(createRangeBoundary(event, "end", isHistory));
+    }
   });
-  const laneCount = displayedEvents.length
-    ? Math.max(...displayedEvents.map((event) => event.displayLane)) + 1
-    : 0;
-  timeline.style.setProperty("--lane-count", laneCount);
+  timeline.dataset.pointLaneCount = String(laneMetrics.pointLaneCount);
+  timeline.dataset.rangeLaneCount = String(laneMetrics.rangeLaneCount);
+  timeline.style.setProperty("--point-lane-count", laneMetrics.pointLaneCount);
+  timeline.style.setProperty("--range-lane-count", laneMetrics.rangeLaneCount);
+}
+
+function createRangeBoundary(event, side, isHistory) {
+  const boundary = document.createElement("span");
+  boundary.className = `range-boundary range-boundary-${side}`;
+  boundary.dataset.rangeOwner = event.id;
+  boundary.dataset.side = side;
+  boundary.dataset.date =
+    side === "start"
+      ? event.displayStartDate || event.startDate
+      : event.displayEndDate || event.endDate;
+  boundary.setAttribute("aria-hidden", "true");
+  boundary.style.setProperty("--range-color", isHistory ? "#959ba8" : event.color);
+  boundary.innerHTML = `
+    <span class="range-axis-tick"></span>
+    <span class="range-end-cap"></span>
+  `;
+  return boundary;
 }
 
 function scheduleTimelineFit() {
@@ -531,21 +588,19 @@ function calculateTimelineScale(timeline) {
   const groupCount = groups.length;
   if (!groupCount) return 1;
 
-  const eventElements = [
-    ...timeline.querySelectorAll(".timeline-event, .range-event"),
-  ];
-  const laneCount = eventElements.length
-    ? Math.max(...eventElements.map((event) => Number(event.dataset.lane))) + 1
-    : 0;
+  const eventElements = [...timeline.querySelectorAll(".timeline-event, .range-event")];
+  const pointLaneCount = Number(timeline.dataset.pointLaneCount) || 0;
+  const rangeLaneCount = Number(timeline.dataset.rangeLaneCount) || 0;
   const totalEvents = eventElements.length;
   const area = timeline.parentElement;
   const availableWidth = Math.max(timeline.clientWidth - 16, 1);
   const availableHeight = Math.max(area.clientHeight - 24, 1);
 
   // Base dimensions describe the relaxed layout. The final scale is whichever
-  // constraint is tighter: horizontal date count or the shared event lanes.
+  // constraint is tighter: horizontal date count or the separated event areas.
   const widthScale = availableWidth / (groupCount * 235);
-  const heightScale = availableHeight / (86 + laneCount * 48);
+  const heightScale =
+    availableHeight / (94 + pointLaneCount * POINT_LANE_STEP + rangeLaneCount * 28);
   const relaxedScale = totalEvents <= 3 ? 1.24 : totalEvents <= 6 ? 1.08 : 1;
   return Math.max(0.01, Math.min(relaxedScale, widthScale, heightScale));
 }
@@ -564,7 +619,9 @@ function fitTimeline(timeline, scale) {
   timeline.dataset.density =
     effectiveScale < 0.38 ? "tiny" : effectiveScale < 0.7 ? "compact" : "relaxed";
 
-  const lineOffset = timeline.offsetTop + 50 * effectiveScale;
+  const pointLaneCount = Number(timeline.dataset.pointLaneCount) || 0;
+  const linePosition = 50 + pointLaneCount * POINT_LANE_STEP;
+  const lineOffset = timeline.offsetTop + linePosition * effectiveScale;
   area.style.setProperty("--timeline-line-y", `${lineOffset}px`);
   positionRangeEvents(timeline, effectiveScale);
 }
@@ -598,6 +655,11 @@ function positionRangeEvents(timeline, scale) {
       group.getBoundingClientRect(),
     ]),
   );
+  const pointLaneCount = Number(timeline.dataset.pointLaneCount) || 0;
+  const linePosition = 50 + pointLaneCount * POINT_LANE_STEP;
+  const lineTop = linePosition * scale;
+  const rangeStart = lineTop + Math.max(12 * scale, 8);
+  const rangeLaneStep = Math.max(28 * scale, 14);
 
   timeline.querySelectorAll(".range-event").forEach((range) => {
     const start = groups.get(range.dataset.startDate);
@@ -614,9 +676,30 @@ function positionRangeEvents(timeline, scale) {
       left = pageRect.left - timelineRect.left;
     }
 
+    const rangeTop = rangeStart + lane * rangeLaneStep;
+    const rangeWidth = Math.max(right - left, 8 * scale);
     range.style.left = `${left}px`;
-    range.style.width = `${Math.max(right - left, 8 * scale)}px`;
-    range.style.top = `${(89 + lane * 48) * scale}px`;
+    range.style.width = `${rangeWidth}px`;
+    range.style.top = `${rangeTop}px`;
+
+    timeline
+      .querySelectorAll(`[data-range-owner="${CSS.escape(range.dataset.id)}"]`)
+      .forEach((boundary) => {
+        const boundaryLeft = boundary.dataset.side === "start" ? left : left + rangeWidth;
+        boundary.style.left = `${boundaryLeft}px`;
+        boundary
+          .querySelector(".range-axis-tick")
+          .style.setProperty("--tick-top", `${lineTop - Math.max(5 * scale, 4)}px`);
+        boundary
+          .querySelector(".range-axis-tick")
+          .style.setProperty("--tick-height", `${Math.max(10 * scale, 8)}px`);
+        boundary
+          .querySelector(".range-end-cap")
+          .style.setProperty("--cap-top", `${rangeTop}px`);
+        boundary
+          .querySelector(".range-end-cap")
+          .style.setProperty("--cap-height", `${range.offsetHeight}px`);
+      });
   });
 }
 

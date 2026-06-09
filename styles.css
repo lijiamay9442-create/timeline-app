@@ -330,7 +330,10 @@ button {
 .timeline {
   --group-count: 1;
   --timeline-scale: 1;
-  --lane-count: 0;
+  --point-lane-count: 0;
+  --range-lane-count: 0;
+  --point-lane-step: 44px;
+  --line-position: calc(50px + var(--point-lane-count) * var(--point-lane-step));
   position: relative;
   z-index: 1;
   display: grid;
@@ -339,7 +342,14 @@ button {
   width: calc(100% - 128px);
   margin: 0 auto;
   flex: 0 0 auto;
-  min-height: calc((86px + var(--lane-count) * 48px) * var(--timeline-scale));
+  min-height: calc(
+    (
+        94px +
+          var(--point-lane-count) * var(--point-lane-step) +
+          var(--range-lane-count) * 28px
+      ) *
+      var(--timeline-scale)
+  );
   padding: 0 calc(30px * var(--timeline-scale));
 }
 
@@ -347,7 +357,7 @@ button {
   content: "";
   position: absolute;
   z-index: 0;
-  top: calc(50px * var(--timeline-scale));
+  top: calc(var(--line-position) * var(--timeline-scale));
   left: 0;
   right: 0;
   height: max(1px, calc(2px * var(--timeline-scale)));
@@ -359,6 +369,7 @@ button {
   position: relative;
   z-index: 1;
   min-width: 0;
+  min-height: inherit;
   padding: 0 calc(12px * var(--timeline-scale));
   text-align: center;
   animation: event-in 0.35s ease both;
@@ -372,6 +383,10 @@ button {
 }
 
 .group-date {
+  position: absolute;
+  top: calc((var(--line-position) - 39px) * var(--timeline-scale));
+  left: 0;
+  right: 0;
   display: block;
   height: calc(40px * var(--timeline-scale));
   color: var(--event-color);
@@ -382,7 +397,12 @@ button {
 }
 
 .event-dot {
-  position: relative;
+  position: absolute;
+  top: calc((var(--line-position) - 10px) * var(--timeline-scale));
+  left: 0;
+  right: 0;
+  display: grid;
+  place-items: start center;
   height: calc(30px * var(--timeline-scale));
 }
 
@@ -405,7 +425,7 @@ button {
 
 .day-events {
   position: absolute;
-  top: calc(76px * var(--timeline-scale));
+  top: calc(12px * var(--timeline-scale));
   left: calc(4px * var(--timeline-scale));
   right: calc(4px * var(--timeline-scale));
 }
@@ -429,11 +449,43 @@ button {
   border-radius: 38% 46% 42% 35%;
   outline: 0;
   cursor: pointer;
-  transform: rotate(-0.4deg);
   box-shadow:
     0 calc(2px * var(--timeline-scale)) calc(7px * var(--timeline-scale))
       color-mix(in srgb, var(--range-color) 16%, transparent),
     inset 0 0 calc(5px * var(--timeline-scale)) rgba(255, 255, 255, 0.34);
+}
+
+.range-boundary {
+  --range-color: var(--blue);
+  position: absolute;
+  z-index: 4;
+  top: 0;
+  width: 0;
+  height: 0;
+  pointer-events: none;
+}
+
+.range-axis-tick,
+.range-end-cap {
+  position: absolute;
+  left: 0;
+  width: max(1px, calc(1px * var(--timeline-scale)));
+  background: var(--range-color);
+  border-radius: 999px;
+  transform: translateX(-50%);
+}
+
+.range-axis-tick {
+  top: var(--tick-top);
+  height: var(--tick-height);
+  opacity: 0.88;
+}
+
+.range-end-cap {
+  top: var(--cap-top);
+  height: var(--cap-height);
+  width: max(2px, calc(2px * var(--timeline-scale)));
+  opacity: 0.72;
 }
 
 .range-event:hover,
@@ -504,7 +556,11 @@ button {
 .timeline-event {
   position: absolute;
   z-index: 4;
-  top: calc(var(--event-lane, 0) * 48px * var(--timeline-scale));
+  top: calc(
+    (var(--point-lane-count) - 1 - var(--event-lane, 0)) *
+      var(--point-lane-step) *
+      var(--timeline-scale)
+  );
   left: 0;
   width: 100%;
   min-width: 0;
@@ -530,10 +586,23 @@ button {
 }
 
 .event-copy {
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: calc(7px * var(--timeline-scale));
   min-width: 0;
 }
 
+.event-time {
+  flex: 0 0 auto;
+  color: var(--event-color);
+  font-size: calc(13px * var(--timeline-scale));
+  font-weight: 650;
+  white-space: nowrap;
+}
+
 .event-copy h2 {
+  min-width: 0;
   margin: 0;
   overflow: hidden;
   font-size: calc(15px * var(--timeline-scale));
