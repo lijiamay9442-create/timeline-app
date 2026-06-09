@@ -1,0 +1,266 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, viewport-fit=cover"
+    />
+    <meta name="theme-color" content="#f7f8fc" />
+    <meta name="application-name" content="时间轴" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta name="apple-mobile-web-app-title" content="时间轴" />
+    <title>时间轴</title>
+    <link rel="manifest" href="./manifest.webmanifest" />
+    <link rel="icon" href="./icons/timeline-icon.svg" type="image/svg+xml" />
+    <link rel="apple-touch-icon" href="./icons/timeline-180.png" />
+    <link rel="stylesheet" href="./styles.css?v=6" />
+  </head>
+  <body>
+    <div id="portraitGuard" class="portrait-guard" aria-hidden="true">
+      <div class="rotate-phone" aria-hidden="true">
+        <span></span>
+      </div>
+      <strong>请将手机横过来</strong>
+      <span>时间轴会在横屏中完整显示</span>
+    </div>
+
+    <div id="pageTrack" class="page-track">
+      <main id="historyPage" class="app page history-page">
+        <header class="app-header">
+          <h1>时间轴</h1>
+
+          <div class="search-shell">
+            <label class="search-box">
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <circle cx="11" cy="11" r="7"></circle>
+                <path d="m16.2 16.2 4.1 4.1"></path>
+              </svg>
+              <input
+                id="historySearchInput"
+                type="search"
+                placeholder="搜索事件"
+                autocomplete="off"
+              />
+            </label>
+            <div id="historySearchResults" class="search-results"></div>
+          </div>
+
+          <button
+            id="historyAddButton"
+            class="round-button add-button"
+            type="button"
+            aria-label="添加事件"
+          >
+            <span></span>
+            <span></span>
+          </button>
+        </header>
+
+        <div class="zoom-controls" aria-label="时间轴缩放">
+          <button type="button" data-zoom-action="out" aria-label="缩小时间轴">−</button>
+          <button class="zoom-reset" type="button" data-zoom-action="reset">自动</button>
+          <button type="button" data-zoom-action="in" aria-label="放大时间轴">+</button>
+        </div>
+
+        <section class="timeline-area history-area" aria-label="历史事件时间轴">
+          <button
+            id="showCurrentButton"
+            class="round-button page-button timeline-page-button timeline-page-button-right"
+            type="button"
+            aria-label="返回当前时间轴"
+          >
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="m9 5 7 7-7 7"></path>
+            </svg>
+          </button>
+          <div id="historyTimeline" class="timeline history-timeline"></div>
+          <div id="historyEmptyState" class="empty-state history-empty">
+            <strong>过去</strong>
+            <span>时间过去后，事件会自动来到这里</span>
+          </div>
+        </section>
+      </main>
+
+      <main id="currentPage" class="app page current-page">
+        <header class="app-header">
+          <h1>时间轴</h1>
+
+          <div class="search-shell">
+            <label class="search-box">
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <circle cx="11" cy="11" r="7"></circle>
+                <path d="m16.2 16.2 4.1 4.1"></path>
+              </svg>
+              <input id="searchInput" type="search" placeholder="搜索事件" autocomplete="off" />
+            </label>
+            <div id="searchResults" class="search-results"></div>
+          </div>
+
+          <button id="addButton" class="round-button add-button" type="button" aria-label="添加事件">
+            <span></span>
+            <span></span>
+          </button>
+        </header>
+
+        <div class="zoom-controls" aria-label="时间轴缩放">
+          <button type="button" data-zoom-action="out" aria-label="缩小时间轴">−</button>
+          <button class="zoom-reset" type="button" data-zoom-action="reset">自动</button>
+          <button type="button" data-zoom-action="in" aria-label="放大时间轴">+</button>
+        </div>
+
+        <section class="timeline-area" aria-label="当前和未来事件时间轴">
+          <button
+            id="showHistoryButton"
+            class="round-button page-button timeline-page-button timeline-page-button-left"
+            type="button"
+            aria-label="查看历史时间轴"
+          >
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="m15 5-7 7 7 7"></path>
+            </svg>
+          </button>
+          <div id="timeline" class="timeline"></div>
+          <div id="emptyState" class="empty-state">
+            <button id="emptyAddButton" type="button">+</button>
+            <strong>添加你的第一件事</strong>
+            <span>它会出现在这条时间轴上</span>
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <section id="editorPage" class="editor-page" aria-hidden="true">
+      <button id="backButton" class="round-button back-button" type="button" aria-label="返回">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path d="m15 5-7 7 7 7"></path>
+        </svg>
+      </button>
+
+      <div class="editor-decoration" aria-hidden="true">
+        <span></span>
+        <span></span>
+      </div>
+
+      <form id="eventForm" class="event-form">
+        <input id="editingId" type="hidden" />
+
+        <section class="form-card time-card">
+          <div class="card-title">
+            <span class="title-icon calendar-icon">
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <rect x="3" y="5" width="18" height="16" rx="3"></rect>
+                <path d="M8 3v4M16 3v4M3 10h18"></path>
+                <path d="M8 14h.01M12 14h.01M16 14h.01M8 18h.01M12 18h.01"></path>
+              </svg>
+            </span>
+            <h2>选择时间</h2>
+          </div>
+          <div class="time-range-fields">
+            <div class="time-column">
+              <span class="time-column-title">开始时间</span>
+              <div class="datetime-fields">
+                <label>
+                  <span class="sr-only">开始日期</span>
+                  <input id="eventDate" type="date" required />
+                </label>
+                <label>
+                  <span class="sr-only">开始时间</span>
+                  <input id="eventTime" type="time" required />
+                </label>
+              </div>
+            </div>
+            <div class="time-column">
+              <span class="time-column-title">截止时间</span>
+              <div class="datetime-fields">
+                <label>
+                  <span class="sr-only">截止日期</span>
+                  <input id="eventEndDate" type="date" required />
+                </label>
+                <label>
+                  <span class="sr-only">截止时间</span>
+                  <input id="eventEndTime" type="time" required />
+                </label>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section class="form-card title-card">
+          <div class="card-title">
+            <span class="title-icon title-field-icon">
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M5 6h14M12 6v13M8 19h8"></path>
+              </svg>
+            </span>
+            <div>
+              <h2>事件标题</h2>
+              <span class="field-hint">必填 · 8字以内</span>
+            </div>
+          </div>
+          <label class="title-input">
+            <span class="sr-only">事件标题</span>
+            <input
+              id="eventTitle"
+              type="text"
+              maxlength="8"
+              placeholder="输入事件标题（8字以内）"
+              required
+            />
+          </label>
+        </section>
+
+        <section class="form-card detail-card">
+          <div class="card-title">
+            <span class="title-icon note-icon">
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <rect x="4" y="3" width="16" height="18" rx="3"></rect>
+                <path d="M8 9h8M8 13h6"></path>
+              </svg>
+            </span>
+            <div>
+              <h2>详细描述</h2>
+              <span class="field-hint">选填</span>
+            </div>
+          </div>
+          <div class="detail-input">
+            <textarea
+              id="eventDetail"
+              maxlength="500"
+              placeholder="补充事件的详细内容..."
+            ></textarea>
+            <span id="charCount">0/500</span>
+          </div>
+          <div class="form-actions">
+            <button id="cancelButton" type="button">取消</button>
+            <span class="action-divider"></span>
+            <button id="saveButton" type="submit">保存</button>
+          </div>
+        </section>
+      </form>
+    </section>
+
+    <div id="toast" class="toast" role="status">已保存到时间轴</div>
+
+    <template id="dateGroupTemplate">
+      <section class="date-group">
+        <time class="group-date"></time>
+        <div class="event-dot"><span></span></div>
+        <div class="day-events"></div>
+      </section>
+    </template>
+
+    <template id="eventTemplate">
+      <article class="timeline-event" tabindex="0">
+        <div class="event-copy">
+          <h2></h2>
+        </div>
+        <button class="delete-button" type="button" aria-label="删除事件">×</button>
+      </article>
+    </template>
+
+    <script src="./app.js?v=6"></script>
+  </body>
+</html>
