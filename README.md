@@ -4,7 +4,13 @@ A lightweight schedule app built around a date-based timeline. It can be install
 
 ## Run Locally
 
-Site is live at https://lijiamay9442-create.github.io/timeline-app/
+Open `index.html` directly, or run the following command in this directory:
+
+```bash
+python3 -m http.server 8000
+```
+
+Then visit `http://localhost:8000`.
 
 ## Install on a Phone
 
