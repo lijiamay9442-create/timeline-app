@@ -1,9 +1,9 @@
-const CACHE_NAME = "timeline-app-v16";
+const CACHE_NAME = "timeline-app-v18";
 const APP_SHELL = [
   "./",
   "./index.html",
-  "./styles.css?v=16",
-  "./app.js?v=16",
+  "./styles.css?v=18",
+  "./app.js?v=18",
   "./manifest.webmanifest",
   "./icons/timeline-icon.svg",
   "./icons/timeline-180.png",

@@ -20,6 +20,8 @@ const elements = {
   searchResults: document.querySelector("#searchResults"),
   timeline: document.querySelector("#timeline"),
   emptyState: document.querySelector("#emptyState"),
+  todayOverview: document.querySelector("#todayOverview"),
+  recentOverview: document.querySelector("#recentOverview"),
   historySearchInput: document.querySelector("#historySearchInput"),
   historySearchResults: document.querySelector("#historySearchResults"),
   historyTimeline: document.querySelector("#historyTimeline"),
@@ -278,9 +280,65 @@ function renderTimeline() {
     isHistory: true,
     laneMetrics,
   });
+  renderOverviewPanels();
 
   scheduleTimelineFit();
   return { currentCount: currentEvents.length, historyCount: historyEvents.length };
+}
+
+function renderOverviewPanels() {
+  const sortedEvents = [...events].sort((a, b) =>
+    eventTimestamp(a).localeCompare(eventTimestamp(b)),
+  );
+  const todayEvents = sortedEvents.filter(
+    (event) => event.startDate <= currentDateKey && event.endDate >= currentDateKey,
+  );
+  const recentEvents = sortedEvents.filter((event) => event.startDate > currentDateKey);
+
+  renderOverviewList(elements.todayOverview, todayEvents.slice(0, 3), "今天还没有事项", true);
+  renderOverviewList(
+    elements.recentOverview,
+    recentEvents.slice(0, 3),
+    "暂时没有最近事项",
+    false,
+  );
+}
+
+function renderOverviewList(container, overviewEvents, emptyText, isToday) {
+  if (!overviewEvents.length) {
+    container.innerHTML = `<p class="overview-empty">${emptyText}</p>`;
+    return;
+  }
+
+  container.innerHTML = overviewEvents
+    .map((event) => {
+      const meta = isToday
+        ? overviewTodayMeta(event)
+        : `${formatShortDate(event.startDate)} ${event.startTime}`;
+      return `
+        <button class="overview-item" type="button" data-overview-event-id="${event.id}">
+          <span class="overview-time">${meta}</span>
+          <strong>${escapeHtml(event.title)}</strong>
+        </button>
+      `;
+    })
+    .join("");
+}
+
+function overviewTodayMeta(event) {
+  if (isRangeEvent(event)) {
+    return event.endDate === currentDateKey
+      ? `截至 ${event.endTime}`
+      : `至 ${formatShortDate(event.endDate)}`;
+  }
+  return event.startTime === event.endTime
+    ? event.startTime
+    : `${event.startTime}–${event.endTime}`;
+}
+
+function formatShortDate(date) {
+  const [, month, day] = date.split("-");
+  return `${month}/${day}`;
 }
 
 function assignEventLanes(sourceEvents) {
@@ -952,6 +1010,10 @@ elements.historySearchInput.addEventListener("input", (event) => handleSharedSea
 });
 document.addEventListener("click", (event) => {
   if (!event.target.closest(".search-shell")) closeSearchResults();
+});
+document.querySelector(".event-overview").addEventListener("click", (event) => {
+  const item = event.target.closest("[data-overview-event-id]");
+  if (item) openEditor(item.dataset.overviewEventId);
 });
 elements.zoomControls.forEach((controls) => {
   controls.addEventListener("click", (event) => {

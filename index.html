@@ -16,7 +16,7 @@
     <link rel="manifest" href="./manifest.webmanifest" />
     <link rel="icon" href="./icons/timeline-icon.svg" type="image/svg+xml" />
     <link rel="apple-touch-icon" href="./icons/timeline-180.png" />
-    <link rel="stylesheet" href="./styles.css?v=16" />
+    <link rel="stylesheet" href="./styles.css?v=18" />
   </head>
   <body>
     <div id="portraitGuard" class="portrait-guard" aria-hidden="true">
@@ -128,6 +128,24 @@
             <strong>添加你的第一件事</strong>
             <span>它会出现在这条时间轴上</span>
           </div>
+
+          <aside class="event-overview" aria-label="事项概览">
+            <section class="overview-card">
+              <div class="overview-heading">
+                <span class="overview-marker today-marker"></span>
+                <h2>今日事项</h2>
+              </div>
+              <div id="todayOverview" class="overview-list"></div>
+            </section>
+
+            <section class="overview-card">
+              <div class="overview-heading">
+                <span class="overview-marker recent-marker"></span>
+                <h2>最近事项</h2>
+              </div>
+              <div id="recentOverview" class="overview-list"></div>
+            </section>
+          </aside>
         </section>
       </main>
     </div>
@@ -262,6 +280,6 @@
       </article>
     </template>
 
-    <script src="./app.js?v=16"></script>
+    <script src="./app.js?v=18"></script>
   </body>
 </html>
