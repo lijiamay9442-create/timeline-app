@@ -6,12 +6,6 @@
 
 网站：https://lijiamay9442-create.github.io/timeline-app/
 
-```bash
-python3 -m http.server 8000
-```
-
-然后访问 `http://localhost:8000`。
-
 ## 安装到手机
 
 1. 将整个目录部署到任意 HTTPS 静态网站。
