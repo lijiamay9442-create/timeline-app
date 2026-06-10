@@ -3,14 +3,7 @@
 A lightweight schedule app built around a date-based timeline. It can be installed on a phone's home screen and used offline.
 
 ## Run Locally
-
-Open `index.html` directly, or run the following command in this directory:
-
-```bash
-python3 -m http.server 8000
-```
-
-Then visit `http://localhost:8000`.
+https://lijiamay9442-create.github.io/timeline-app/
 
 ## Install on a Phone
 
