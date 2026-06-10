@@ -16,7 +16,7 @@
     <link rel="manifest" href="./manifest.webmanifest" />
     <link rel="icon" href="./icons/timeline-icon.svg" type="image/svg+xml" />
     <link rel="apple-touch-icon" href="./icons/timeline-180.png" />
-    <link rel="stylesheet" href="./styles.css?v=18" />
+    <link rel="stylesheet" href="./styles.css?v=28" />
   </head>
   <body>
     <div id="portraitGuard" class="portrait-guard" aria-hidden="true">
@@ -123,10 +123,16 @@
             </svg>
           </button>
           <div id="timeline" class="timeline"></div>
+          <button
+            id="emptyAddButton"
+            class="timeline-empty-add"
+            type="button"
+            aria-label="添加第一件事"
+          >
+            +
+          </button>
           <div id="emptyState" class="empty-state">
-            <button id="emptyAddButton" type="button">+</button>
             <strong>添加你的第一件事</strong>
-            <span>它会出现在这条时间轴上</span>
           </div>
 
           <aside class="event-overview" aria-label="事项概览">
@@ -280,6 +286,6 @@
       </article>
     </template>
 
-    <script src="./app.js?v=18"></script>
+    <script src="./app.js?v=28"></script>
   </body>
 </html>

@@ -480,15 +480,18 @@ function renderEventCollection({
 }) {
   timeline.innerHTML = "";
   emptyState.classList.toggle("visible", displayedEvents.length === 0);
+  if (timeline === elements.timeline) {
+    elements.emptyAddButton.classList.toggle("visible", displayedEvents.length === 0);
+  }
 
   const emptyTitleElement = emptyState.querySelector("strong");
   const emptyTextElement = emptyState.querySelector("span");
   if (keyword && displayedEvents.length === 0) {
     emptyTitleElement.textContent = "没有找到相关事件";
-    emptyTextElement.textContent = "换一个关键词试试";
+    if (emptyTextElement) emptyTextElement.textContent = "换一个关键词试试";
   } else {
     emptyTitleElement.textContent = emptyTitle;
-    emptyTextElement.textContent = emptyText;
+    if (emptyTextElement) emptyTextElement.textContent = emptyText;
   }
 
   const pointEvents = displayedEvents.filter((event) => !isRangeEvent(event));
@@ -666,8 +669,11 @@ function calculateTimelineScale(timeline) {
 function fitTimeline(timeline, scale) {
   const groups = [...timeline.querySelectorAll(".date-group")];
   const groupCount = groups.length;
-  if (!groupCount) return;
   const area = timeline.parentElement;
+  if (!groupCount) {
+    area.style.setProperty("--timeline-line-y", `${timeline.offsetTop + 50}px`);
+    return;
+  }
   const baseWidth = Number(timeline.dataset.baseWidth) || timeline.clientWidth;
   const effectiveScale = scale * manualZoom;
   timeline.style.width = `${baseWidth * manualZoom}px`;
